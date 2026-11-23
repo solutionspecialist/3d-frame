@@ -1,0 +1,303 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Fridge frame generator</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Josefin+Sans:wght@600;700&family=Work+Sans:wght@400;500;600&display=swap">
+<style>
+/* VOICE: a workshop tool, precise and calm; numbers first, no chatter.
+   IDEA: the page behaves like a framer's mat-cutting bench: the frame on the board, the measurements in a rail beside it.
+   PICTURE: the live 3D frame itself, large, black PETG on a stone board, turnable.
+   COLOUR and TYPE: stone ground, near-black ink, one oxblood field and accent; Josefin Sans (deco geometric) titles, Work Sans body.
+   LAYOUT: preview left (60%), parameter rail right; readout strip under the preview; stacks to title, preview, controls below 900px. */
+:root{color-scheme:light dark;
+  --bg:light-dark(#ece6db,#17161a);--board:light-dark(#ddd4c5,#232127);--ink:light-dark(#1d1b1a,#ece6db);
+  --mute:light-dark(#5d5750,#a69f95);--line:light-dark(#c9bfae,#38343c);--field:light-dark(#fbf8f2,#1e1c22);
+  --ox:light-dark(#7a1f2b,#c2525f);--oxink:#fbf3ee;--warn:light-dark(#7a4a00,#e0b060);--warnbg:light-dark(#f6e7c8,#3a2f1c);
+  --errbg:light-dark(#f4d6d6,#401c22)}
+:root[data-theme=light]{color-scheme:light}:root[data-theme=dark]{color-scheme:dark}
+*{box-sizing:border-box;min-width:0}
+body{margin:0;background:var(--bg);color:var(--ink);font:16px/1.55 "Work Sans",system-ui,sans-serif;overflow-x:clip}
+header{background:var(--ox);color:var(--oxink);padding:22px max(5vw,16px) 20px}
+h1{font:700 clamp(30px,4vw,44px)/1.05 "Josefin Sans",sans-serif;margin:0;letter-spacing:.01em;text-wrap:balance}
+header p{margin:6px 0 0;opacity:.9;max-width:70ch}
+main{display:grid;grid-template-columns:minmax(0,1.55fr) minmax(300px,1fr);gap:clamp(16px,2.5vw,32px);padding:clamp(16px,2.5vw,32px) max(5vw,16px);max-width:1400px;margin:0 auto}
+@media(max-width:900px){main{grid-template-columns:minmax(0,1fr)}}
+.stage{display:flex;flex-direction:column;gap:12px}
+.view{position:relative;background:var(--board);border-radius:10px;min-height:clamp(320px,52vw,560px);overflow:hidden}
+.view canvas{position:absolute;inset:0;width:100%;height:100%;display:block;touch-action:none}
+.hint{position:absolute;left:12px;bottom:10px;font-size:13px;color:var(--mute);pointer-events:none}
+.busy{position:absolute;right:12px;top:10px;font-size:13px;color:var(--mute)}
+.read{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:1px;background:var(--line);border:1px solid var(--line);border-radius:8px;overflow:hidden}
+@media(max-width:600px){.read{grid-template-columns:repeat(2,minmax(0,1fr))}}
+.read div{background:var(--field);padding:10px 12px}
+.read b{display:block;font:600 clamp(16px,1.6vw,20px)/1.25 "Josefin Sans",sans-serif}
+.read span{font-size:13px;color:var(--mute)}
+.msgs{display:flex;flex-direction:column;gap:6px}
+.msg{padding:9px 12px;border-radius:6px;font-size:14.5px}
+.msg.err{background:var(--errbg);color:var(--ink);border-left:0}
+.msg.warn{background:var(--warnbg);color:var(--ink)}
+.rail{display:flex;flex-direction:column;gap:18px}
+fieldset{border:0;border-top:1px solid var(--line);margin:0;padding:12px 0 0;display:grid;align-items:end;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:10px 14px}
+legend{font:600 17px "Josefin Sans",sans-serif;padding:0 8px 0 0;color:var(--ox)}
+label{display:flex;flex-direction:column;gap:3px;font-size:14px;color:var(--mute)}
+label.check{flex-direction:row;align-items:center;gap:10px;color:var(--ink);font-size:15px;min-height:44px}
+input[type=number],select{font:16px "Work Sans",sans-serif;color:var(--ink);background:var(--field);border:1px solid var(--line);border-radius:6px;padding:9px 10px;min-height:44px;width:100%}
+input[type=checkbox]{width:22px;height:22px;accent-color:var(--ox)}
+input:focus-visible,select:focus-visible,button:focus-visible{outline:2px solid var(--ox);outline-offset:2px}
+.actions{display:flex;flex-wrap:wrap;gap:10px}
+button{font:600 16px "Work Sans",sans-serif;min-height:44px;padding:0 18px;border-radius:6px;border:1px solid var(--ox);background:transparent;color:var(--ox);cursor:pointer}
+button.primary{background:var(--ox);color:var(--oxink)}
+button:disabled{opacity:.45;cursor:not-allowed}
+.note{font-size:13.5px;color:var(--mute);margin:0}
+footer{padding:0 max(5vw,16px) 32px;max-width:1400px;margin:0 auto;color:var(--mute);font-size:14px}
+footer p{max-width:80ch;margin:6px 0}
+</style>
+<script type="importmap">{"imports":{"three":"./vendor/three.module.js","three/addons/":"./vendor/"}}</script>
+</head>
+<body>
+<header>
+  <h1>Fridge frame generator</h1>
+  <p>Art deco fridge frame for a card or photo. Prints upright with the card slot on top; magnets glue into the back.</p>
+</header>
+<main>
+  <section class="stage" aria-label="Preview">
+    <div class="view" id="view"><span class="busy" id="busy">Loading geometry engine…</span><span class="hint">Drag to turn · scroll or pinch to zoom</span></div>
+    <div class="read" id="read">
+      <div><b id="r-size">–</b><span>size as printed, mm</span></div>
+      <div><b id="r-bridge">–</b><span>window top bridge</span></div>
+      <div><b id="r-mag">–</b><span>border · magnets</span></div>
+      <div><b id="r-solid">–</b><span>closed solid check</span></div>
+    </div>
+    <div class="msgs" id="msgs" aria-live="polite"></div>
+  </section>
+  <form class="rail" id="form" autocomplete="off">
+    <fieldset><legend>Card or photo</legend>
+      <label>Width, mm <input type="number" id="CARD_W" step="0.1" min="30" max="250"></label>
+      <label>Height, mm <input type="number" id="CARD_H" step="0.1" min="30" max="300"></label>
+      <label>Thickness, mm <input type="number" id="CARD_T" step="0.05" min="0.05" max="3"></label>
+    </fieldset>
+    <fieldset><legend>Fit</legend>
+      <label>Clearance, mm per side <input type="number" id="CLR" step="0.05" min="0.1" max="1"></label>
+      <label>Lip over card, mm per side <input type="number" id="OVERLAP" step="0.1" min="1" max="8"></label>
+      <label>Border, mm <input type="number" id="BORDER" step="0.5" min="5" max="60" placeholder="auto"></label>
+    </fieldset>
+    <fieldset><legend>Magnets</legend>
+      <label>Diameter, mm <input type="number" id="MAG_DIA" step="0.5" min="3" max="20"></label>
+      <label>Thickness, mm <input type="number" id="MAG_T" step="0.05" min="0.5" max="6"></label>
+      <label>Count <select id="MAG_N"><option value="2">2</option><option value="4">4</option><option value="6">6</option></select></label>
+    </fieldset>
+    <fieldset><legend>Style</legend>
+      <label>Style <select id="STYLE"></select></label>
+      <div id="styleparams" style="display:contents"></div>
+    </fieldset>
+    <fieldset><legend>Printing</legend>
+      <label class="check"><input type="checkbox" id="FIN"> Snap-off fin</label>
+      <label>Fin depth, mm <input type="number" id="FIN_D" step="1" min="5" max="40"></label>
+      <label class="check"><input type="checkbox" id="COUPON"> Test piece: top 20 mm only</label>
+    </fieldset>
+    <div class="actions">
+      <button type="button" class="primary" id="dl3mf" disabled>Download 3MF</button>
+      <button type="button" id="dlstl" disabled>STL</button>
+      <button type="button" class="primary" id="dlzip" disabled hidden>Download .zip</button>
+      <button type="button" id="copy">Copy parameters</button>
+      <button type="button" id="reset">Reset</button>
+    </div>
+    <p class="note" id="dlnote">Open the 3MF in your slicer; the STL is the same part for other tools.</p>
+  </form>
+</main>
+<footer>
+  <p>Slice it yourself. Keep the orientation it loads in: card slot on top, frame width along the bed's front-to-back axis. Set the 75% overhang speed and the external bridge speed to 10 mm/s: the window's top edge prints as an overhanging wall. Brim on, supports off.</p>
+  <p>Defaults are a business card and 8 × 1.75 mm magnets in PETG, measured on a Sovol SV06 Plus; fits and the 46 mm bridge are proven there, not on other printers. Leave Border, Motif scale and the fan counts empty for automatic. Source and tests: <a href="https://github.com/solutionspecialist/3d-frame">github.com/solutionspecialist/3d-frame</a>.</p>
+</footer>
+<script type="module">
+import Module from "./vendor/manifold.js";
+import { DEFAULTS, validate, buildFrame } from "./src/core.js";
+import { toSTL, to3MF, zip, closedSolid, meshArrays } from "./src/export.js";
+import { STYLES, byId } from "./src/styles/index.js";
+import * as THREE from "three";
+import { OrbitControls } from "three/addons/OrbitControls.js";
+{
+  const KEYS = ["CARD_W", "CARD_H", "CARD_T", "CLR", "OVERLAP", "BORDER", "MAG_DIA", "MAG_T", "MAG_N", "FIN", "FIN_D"];
+  const $ = id => document.getElementById(id);
+  const STORE = "3d-frame-params-v2";
+  let M = null, downloads = null, inClaude = false, timer = 0, last = null;
+
+  // ---------------------------------------------------------------- inputs
+  $("STYLE").innerHTML = STYLES.map(s => `<option value="${s.id}">${s.name}</option>`).join("");
+  function styleControls(style, values = {}) {
+    $("styleparams").innerHTML = style.params.map(q => {
+      const v = values[q.key] ?? q.default, id = `sp-${q.key}`;
+      if (q.type === "select") return `<label>${q.label} <select id="${id}">${q.options.map(([k, t]) => `<option value="${k}"${k === v ? " selected" : ""}>${t}</option>`).join("")}</select></label>`;
+      const step = q.type === "auto-int" ? 1 : q.step || 0.1;
+      return `<label>${q.label} <input type="number" id="${id}" step="${step}" min="${q.min}" max="${q.max}" placeholder="auto" value="${v === "auto" ? "" : v}"></label>`;
+    }).join("");
+  }
+  function readStyle(style) {
+    const sp = {};
+    for (const q of style.params) {
+      const el = $(`sp-${q.key}`);
+      sp[q.key] = q.type === "select" ? el.value : (el.value === "" ? "auto" : Number(el.value));
+    }
+    return sp;
+  }
+  function load() {
+    let saved = {};
+    try { saved = JSON.parse(localStorage.getItem(STORE) || "{}"); } catch (e) { saved = {}; }
+    const v = { ...DEFAULTS, ...(saved.params || {}) };
+    for (const k of KEYS) {
+      const el = $(k);
+      if (el.type === "checkbox") el.checked = !!v[k];
+      else el.value = v[k] === "auto" ? "" : v[k];
+    }
+    $("COUPON").checked = !!saved.coupon;
+    $("STYLE").value = byId(saved.style).id;
+    styleControls(byId(saved.style), saved.styleParams || {});
+  }
+  function read() {
+    const p = {};
+    for (const k of KEYS) {
+      const el = $(k);
+      p[k] = el.type === "checkbox" ? el.checked : (k === "BORDER" && el.value === "" ? "auto" : Number(el.value));
+    }
+    const style = byId($("STYLE").value);
+    return { params: p, style, styleParams: readStyle(style), coupon: $("COUPON").checked };
+  }
+
+  // ---------------------------------------------------------------- 3D view
+  const view = $("view"), renderer = new THREE.WebGLRenderer({ antialias: true });
+  renderer.setPixelRatio(Math.min(devicePixelRatio, 2));
+  view.prepend(renderer.domElement);
+  const scene = new THREE.Scene();
+  const camera = new THREE.PerspectiveCamera(32, 1, 1, 5000);
+  camera.up.set(0, 0, 1);
+  const controls = new OrbitControls(camera, renderer.domElement);
+  controls.enableDamping = true;
+  scene.add(new THREE.HemisphereLight(0xffffff, 0x3a3530, 1.4));
+  const key = new THREE.DirectionalLight(0xffffff, 2.2); key.position.set(300, -200, 400); scene.add(key);
+  const rim = new THREE.DirectionalLight(0xffffff, 0.7); rim.position.set(-300, 250, 120); scene.add(rim);
+  const material = new THREE.MeshStandardMaterial({ color: 0x302e33, roughness: 0.5, metalness: 0.05, flatShading: true });
+  let mesh = null, framed = false;
+  function resize() {
+    const w = view.clientWidth, h = view.clientHeight;
+    renderer.setSize(w, h, false); camera.aspect = w / h; camera.updateProjectionMatrix();
+  }
+  const ro = new ResizeObserver(resize); ro.observe(view);
+  function paintBg() { scene.background = new THREE.Color(getComputedStyle(view).backgroundColor); }
+  new MutationObserver(paintBg).observe(document.documentElement, { attributes: true, attributeFilter: ["data-theme"] });
+  matchMedia("(prefers-color-scheme: dark)").addEventListener("change", paintBg);
+  (function loop() { controls.update(); renderer.render(scene, camera); requestAnimationFrame(loop); })();
+
+  function show(part) {
+    const { verts, tris } = meshArrays(part);
+    const g = new THREE.BufferGeometry();
+    g.setAttribute("position", new THREE.Float32BufferAttribute(verts, 3));
+    g.setIndex(tris);
+    g.computeBoundingSphere();
+    if (mesh) { scene.remove(mesh); mesh.geometry.dispose(); }
+    mesh = new THREE.Mesh(g, material); scene.add(mesh);
+    const s = g.boundingSphere, c = s.center;
+    controls.target.copy(c);
+    // fit the whole part every build; keep the viewer's direction after the first view
+    const d = s.radius / Math.sin(THREE.MathUtils.degToRad(camera.fov / 2)) * 1.08;
+    const dir = framed ? camera.position.clone().sub(controls.target).normalize()
+                       : new THREE.Vector3(0.82, -0.42, 0.38).normalize();   // front faces +X
+    camera.position.copy(c).addScaledVector(dir, d);
+    framed = true;
+  }
+
+  // ---------------------------------------------------------------- generate
+  function msg(list, cls) { return list.map(t => `<div class="msg ${cls}">${t}</div>`).join(""); }
+  function setDl(ok) { for (const id of ["dl3mf", "dlstl", "dlzip"]) $(id).disabled = !ok; }
+  function regenerate() {
+    const { params, style, styleParams, coupon } = read();
+    try { localStorage.setItem(STORE, JSON.stringify({ params, style: style.id, styleParams, coupon })); } catch (e) { /* no storage here */ }
+    const v = validate(params, style, styleParams, M);
+    $("msgs").innerHTML = msg(v.err, "err") + msg(v.warn, "warn");
+    const g = v.g;
+    $("r-bridge").textContent = `${(2 * g.WIN_X).toFixed(1)} mm`;
+    $("r-mag").textContent = `${g.SIDE.toFixed(1)} mm · ${g.MAGS.length}×`;
+    if (v.err.length || !M) {
+      setDl(false); last = null;
+      $("r-size").textContent = "–"; $("r-solid").textContent = v.err.length ? "not built" : "–";
+      if (M) $("busy").textContent = "";
+      return;
+    }
+    const t0 = performance.now();
+    const { part } = buildFrame(M, params, style, styleParams, { coupon });
+    const bb = part.boundingBox(), size = [0, 1, 2].map(i => bb.max[i] - bb.min[i]);
+    const closed = closedSolid(part);
+    $("r-size").textContent = `${size[1].toFixed(1)} × ${size[2].toFixed(1)} × ${size[0].toFixed(1)}`;
+    $("r-solid").textContent = closed.ok ? "passed" : `${closed.bad} open edges`;
+    if (!closed.ok) $("msgs").innerHTML += msg(["The mesh is not a closed solid for these settings. Copy the parameters and report them."], "err");
+    $("busy").textContent = `built in ${(performance.now() - t0) / 1000 < 1 ? "under a second" : ((performance.now() - t0) / 1000).toFixed(1) + " s"}`;
+    show(part);
+    if (last) last.part.delete();
+    last = { part, params, style, styleParams, coupon, ok: closed.ok };
+    setDl(closed.ok);
+  }
+  const schedule = () => {   // a build takes seconds on the main thread: wait for typing to pause
+    clearTimeout(timer);
+    timer = setTimeout(() => { $("busy").textContent = "Building…"; requestAnimationFrame(() => setTimeout(regenerate, 0)); }, 600);
+  };
+  $("form").addEventListener("input", schedule);
+  $("STYLE").addEventListener("change", () => styleControls(byId($("STYLE").value)));
+  $("form").addEventListener("submit", e => e.preventDefault());
+
+  // ---------------------------------------------------------------- downloads
+  const fmt = x => +x.toFixed(2);
+  const baseName = () => { const { params: p, style, coupon } = last; return `${style.id}-frame-${fmt(p.CARD_W)}x${fmt(p.CARD_H)}${coupon ? "-test-top20" : ""}`; };
+  const paramsJSON = () => JSON.stringify({ params: last.params, style: last.style.id, styleParams: last.styleParams, coupon: last.coupon }, null, 2);
+  function direct(name, bytes, type) {     // normal browser download (GitHub Pages and other hosts)
+    const url = URL.createObjectURL(new Blob([bytes], { type }));
+    const a = document.createElement("a"); a.href = url; a.download = name; document.body.append(a); a.click(); a.remove();
+    setTimeout(() => URL.revokeObjectURL(url), 5000);
+  }
+  $("dl3mf").addEventListener("click", () => { if (last) direct(`${baseName()}.3mf`, to3MF(last.part, baseName()), "model/3mf"); });
+  $("dlstl").addEventListener("click", () => { if (last) direct(`${baseName()}.stl`, toSTL(last.part, baseName()), "model/stl"); });
+  $("dlzip").addEventListener("click", async () => {   // claude.ai: only some file types may be saved, zip is one
+    if (!last || !downloads) return;
+    const base = baseName(), enc = new TextEncoder();
+    const notes = `Open ${base}.3mf in your slicer (the .stl is the same part).\nKeep the orientation: slot on top. Brim on, supports off.\n75% overhang speed and external bridge speed: 10 mm/s.\n`;
+    const data = zip([
+      { name: `${base}.3mf`, data: to3MF(last.part, base) }, { name: `${base}.stl`, data: toSTL(last.part, base) },
+      { name: "parameters.json", data: enc.encode(paramsJSON()) }, { name: "README.txt", data: enc.encode(notes) },
+    ]);
+    try { await downloads.save({ filename: `${base}.zip`, data }); $("dlnote").textContent = "Saved."; }
+    catch (e) { $("dlnote").textContent = e && e.code === "declined" ? "Download cancelled." : "Download isn't available here."; }
+  });
+  $("copy").addEventListener("click", async () => {
+    const r = read(), text = JSON.stringify({ params: r.params, style: r.style.id, styleParams: r.styleParams, coupon: r.coupon });
+    try { await navigator.clipboard.writeText(text); $("dlnote").textContent = "Parameters copied."; }
+    catch (e) { $("dlnote").textContent = text; }
+  });
+  $("reset").addEventListener("click", () => {
+    try { localStorage.removeItem(STORE); } catch (e) { /* ignore */ }
+    load(); framed = false; regenerate();
+  });
+
+  // ---------------------------------------------------------------- start
+  load(); paintBg(); resize();
+  regenerate();                        // readouts and checks before the engine arrives
+  Module().then(m => { m.setup(); M = m; regenerate(); })
+    .catch(() => { $("busy").textContent = "The geometry engine could not load in this view."; });
+  // inside claude.ai the page is sandboxed: direct downloads are blocked, the platform's save is used
+  let tries = 0;
+  (function waitClaude() {
+    if (window.claude && window.claude.use) {
+      inClaude = true;
+      $("dl3mf").hidden = $("dlstl").hidden = true;
+      window.claude.use("downloads").then(d => {
+        downloads = d;
+        if (!d) { $("dlnote").textContent = "Downloads aren't available in this view."; return; }
+        $("dlzip").hidden = false; $("dlzip").disabled = !(last && last.ok);
+        $("dlnote").textContent = "The zip holds the 3MF (open this one in your slicer), an STL and the parameters.";
+      }, () => { $("dlnote").textContent = "Downloads aren't available in this view."; });
+    } else if (++tries < 15) setTimeout(waitClaude, 100);
+  })();
+}
+</script>
+</body>
+</html>
