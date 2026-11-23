@@ -74,3 +74,11 @@ Register the style in `src/styles/index.js`.
 `test/fixtures.json` holds volumes and sizes from the original build123d model, the version that was
 printed and checked. The JavaScript reproduces them to within 0.0001 %. Any change to the core or to
 art deco must keep them unless the change is deliberate.
+
+## License
+
+[CC0 1.0](LICENSE): public domain. Use, change, sell or redistribute the code and anything it
+generates, for any purpose, with no attribution required.
+
+The site bundles two libraries that keep their own licenses: three.js
+([MIT](docs/vendor/LICENSE-three.js.txt)) and manifold ([Apache 2.0](docs/vendor/LICENSE-manifold.txt)).

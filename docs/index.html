@@ -110,7 +110,7 @@ footer p{max-width:80ch;margin:6px 0}
 </main>
 <footer>
   <p>Slice it yourself. Keep the orientation it loads in: card slot on top, frame width along the bed's front-to-back axis. Set the 75% overhang speed and the external bridge speed to 10 mm/s: the window's top edge prints as an overhanging wall. Brim on, supports off.</p>
-  <p>Defaults are a business card and 8 × 1.75 mm magnets in PETG, measured on a Sovol SV06 Plus; fits and the 46 mm bridge are proven there, not on other printers. Leave Border, Motif scale and the fan counts empty for automatic. Source and tests: <a href="https://github.com/solutionspecialist/3d-frame">github.com/solutionspecialist/3d-frame</a>.</p>
+  <p>Defaults are a business card and 8 × 1.75 mm magnets in PETG, measured on a Sovol SV06 Plus; fits and the 46 mm bridge are proven there, not on other printers. Leave Border, Motif scale and the fan counts empty for automatic. Source and tests: <a href="https://github.com/solutionspecialist/3d-frame">github.com/solutionspecialist/3d-frame</a>. Public domain (CC0): use it for anything.</p>
 </footer>
 <script type="module">
 import Module from "./vendor/manifold.js";
@@ -178,7 +178,7 @@ import { OrbitControls } from "three/addons/OrbitControls.js";
   scene.add(new THREE.HemisphereLight(0xffffff, 0x3a3530, 1.4));
   const key = new THREE.DirectionalLight(0xffffff, 2.2); key.position.set(300, -200, 400); scene.add(key);
   const rim = new THREE.DirectionalLight(0xffffff, 0.7); rim.position.set(-300, 250, 120); scene.add(rim);
-  const material = new THREE.MeshStandardMaterial({ color: 0x302e33, roughness: 0.5, metalness: 0.05, flatShading: true });
+  const material = new THREE.MeshStandardMaterial({ color: 0xe8661c, roughness: 0.55, metalness: 0.0, flatShading: true });   // orange PETG
   let mesh = null, framed = false;
   function resize() {
     const w = view.clientWidth, h = view.clientHeight;

@@ -8,5 +8,9 @@ cpSync(root + "src", out + "src", { recursive: true });
 for (const [from, to] of [["node_modules/manifold-3d/manifold.js", "manifold.js"], ["node_modules/manifold-3d/manifold.wasm", "manifold.wasm"],
   ["node_modules/three/build/three.module.js", "three.module.js"], ["node_modules/three/examples/jsm/controls/OrbitControls.js", "OrbitControls.js"]])
   cpSync(root + from, out + "vendor/" + to);
+// bundled libraries keep their own licenses: ship them next to the files
+cpSync(root + "node_modules/three/LICENSE", out + "vendor/LICENSE-three.js.txt");
+cpSync(root + "node_modules/manifold-3d/LICENSE", out + "vendor/LICENSE-manifold.txt");
+cpSync(root + "LICENSE", out + "LICENSE");
 cpSync(root + "web/.nojekyll", out + ".nojekyll");
 console.log("site written to docs/");

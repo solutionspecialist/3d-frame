@@ -4,6 +4,7 @@
   "description": "Parametric 3D-printable fridge frames for cards and photos",
   "type": "module",
   "private": true,
+  "license": "CC0-1.0",
   "scripts": {
     "test": "node --test test/*.test.mjs",
     "site": "node tools/build-site.mjs"
