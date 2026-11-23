@@ -3,7 +3,7 @@
 import { helpers } from "../geom.js";
 
 const REF_BORDER = 10.7;   // border (beyond the pocket) the motif sizes were drawn for
-const FAN_PITCH = 45;      // mm of side length per fan, at scale 1
+const FAN_PITCH = 43;      // mm of side length per fan, at scale 1 (card: 1 per side; 2x6 strip: 3, or 2 at an 18 mm border)
 const R1 = 1.2, R2 = 1.8;  // relief heights: line work / fans and diamonds
 
 export default {

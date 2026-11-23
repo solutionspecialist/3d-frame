@@ -24,7 +24,7 @@ test("motif scale follows the border; count shrinks as motifs grow", () => {
   const r = deco.resolve(derive({ BORDER: 18 }, deco), {});
   assert.ok(Math.abs(r.s - 18 / 10.7) < 1e-9);
   const r2 = deco.resolve(derive({ CARD_W: 50.8, CARD_H: 152.4, BORDER: 18 }, deco), {});
-  assert.equal(r2.nLong, Math.floor(147.4 / (45 * r2.s)));
+  assert.equal(r2.nLong, 2, "photo strip at an 18 mm border: two fans per long side");
 });
 
 test("border below the minimum is raised, with a warning", () => {
