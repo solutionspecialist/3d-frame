@@ -5,6 +5,9 @@ import { helpers } from "../geom.js";
 const REF_BORDER = 10.7;   // border (beyond the pocket) the motif sizes were drawn for
 const FAN_PITCH = 43;      // mm of side length per fan, at scale 1 (card: 1 per side; 2x6 strip: 3, or 2 at an 18 mm border)
 const R1 = 1.2, R2 = 1.8;  // relief heights: line work / fans and diamonds
+const CANT = 8.0;          // 45° outline corner, mm at scale 1
+const RING = 1.0, GAP = 0.8;   // nested corner: ring width (>= 0.8 at full relief depth) and gap to the centre
+const NEST_MIN = 2.5;          // mm across the nested centre; below it "nested" prints as one solid diamond
 
 export default {
   id: "art-deco",
@@ -16,7 +19,7 @@ export default {
     { key: "fansLong", label: "Fans per long side", type: "auto-int", default: "auto", min: 0, max: 8 },
     { key: "fansShort", label: "Fans per short side", type: "auto-int", default: "auto", min: 0, max: 8 },
     { key: "corner", label: "Corner motif", type: "select", default: "nested",
-      options: [["nested", "Nested diamond"], ["diamond", "Diamond"], ["none", "None"]] },
+      options: [["nested", "Nested diamond (solid below a 12 mm border)"], ["diamond", "Diamond"], ["none", "None"]] },
   ],
 
   resolve(g, sp) {
@@ -34,8 +37,22 @@ export default {
   },
 
   outline(M, g, sp) {
-    const { poly } = helpers(M), { s } = this.resolve(g, sp), c = 8.0 * s, X = g.OUT_X, Y = g.OUT_Z;
+    const { poly } = helpers(M), { s } = this.resolve(g, sp), c = CANT * s, X = g.OUT_X, Y = g.OUT_Z;
     return poly([[-X + c, -Y], [X - c, -Y], [X, -Y + c], [X, Y - c], [X - c, Y], [-X + c, Y], [-X, Y - c], [-X, -Y + c]]);
+  },
+
+  /** Largest corner diamond that fits the field untrimmed (top-right corner; mirrored for the rest).
+   *  The field's corner is pinched between the window offset's square corner P and the outline's 45°
+   *  cant, both at 45° to the diamond's axes, so the diamond sits on the diagonal through P. With L1
+   *  radius R and centre P + (t, t): P outside needs 2t >= R; the cant needs 2t + R <= A; the straight
+   *  field edges need t + R <= m. Largest R: t = R/2, R = min(A/2, 2m/3). k = half-side before the 45°
+   *  turn (R = k√2). kIn = the nested version's solid centre, a 0.8 mm gap inside the ring. */
+  cornerDiamond(g, s) {
+    const { WIN_X, WIN_Z, OUT_X, OUT_Z } = g, c = CANT * s;
+    const px = WIN_X + 3.7, py = WIN_Z + 3.7, m = OUT_X - 3.6 - px;
+    const A = (OUT_X + OUT_Z - c - 3.6 * Math.SQRT2) - (px + py);
+    const R = Math.min(A / 2, 2 * m / 3) - 0.01, t = R / 2, k = R / Math.SQRT2;
+    return { cx: px + t, cy: py + t, k, kIn: k - (RING + GAP) * s };
   },
 
   relief(M, g, sp, O) {
@@ -64,10 +81,11 @@ export default {
     const lvl1 = [band, ring1, ring2], lvl2 = [];
     if (fans.length) lvl2.push(CS.union(fans).intersect(field));
     if (corner !== "none") {
-      const cx = (WIN_X + 3.7 + OUT_X - 3.6) / 2, cy = (WIN_Z + 3.7 + OUT_Z - 3.6) / 2 - 1.0 * s;
-      const sq = k => rect(cx - k * s, cy - k * s, cx + k * s, cy + k * s);
-      lvl2.push(mirror4(rot45(sq(2.6), cx, cy).intersect(field)));
-      if (corner === "nested") lvl1.push(mirror4(rot45(sq(4.4), cx, cy).subtract(rot45(sq(3.4), cx, cy)).intersect(field)));
+      const d = this.cornerDiamond(g, s), sq = k => rot45(rect(d.cx - k, d.cy - k, d.cx + k, d.cy + k), d.cx, d.cy);
+      if (corner === "nested" && 2 * Math.SQRT2 * d.kIn >= NEST_MIN) {
+        lvl1.push(mirror4(sq(d.k).subtract(sq(d.k - RING * s))));
+        lvl2.push(mirror4(sq(d.kIn)));
+      } else lvl2.push(mirror4(sq(d.k)));
     }
     const L1all = clean(CS.union(lvl1));
     if (!lvl2.length) return [{ shape: L1all, height: R1 }];
