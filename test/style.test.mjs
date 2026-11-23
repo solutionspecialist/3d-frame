@@ -27,6 +27,28 @@ test("motif scale follows the border; count shrinks as motifs grow", () => {
   assert.equal(r2.nLong, 2, "photo strip at an 18 mm border: two fans per long side");
 });
 
+test("corner diamond fits the field untrimmed at every border (no bite from the window corner)", () => {
+  const { CrossSection: CS } = M;
+  for (const card of [{}, { CARD_W: 50.8, CARD_H: 152.4 }, { CARD_W: 101.6, CARD_H: 152.4 }])
+    for (let B = 10.7; B <= 25; B += 0.5) {
+      const g = derive({ ...card, BORDER: B }, deco), s = deco.resolve(g, {}).s, d = deco.cornerDiamond(g, s);
+      const rect = (x0, y0, x1, y1) => CS.ofPolygons([[[x0, y0], [x1, y0], [x1, y1], [x0, y1]]]);
+      const O = deco.outline(M, g, {}), W = rect(-g.WIN_X, -g.WIN_Z, g.WIN_X, g.WIN_Z);
+      const field = O.offset(-3.6, "Miter", 5).subtract(W.offset(3.7, "Miter", 5));
+      const dia = rect(d.cx - d.k, d.cy - d.k, d.cx + d.k, d.cy + d.k).translate([-d.cx, -d.cy]).rotate(45).translate([d.cx, d.cy]);
+      assert.ok(dia.subtract(field).area() < 1e-6, `border ${B}: diamond leaves the field`);
+      assert.ok(d.k > 0, `border ${B}: no room for a diamond`);
+    }
+});
+
+test("nested corner turns solid when its centre would be under 2.5 mm", () => {
+  const centre = B => { const g = derive({ BORDER: B }, deco), d = deco.cornerDiamond(g, deco.resolve(g, {}).s); return 2 * Math.SQRT2 * d.kIn; };
+  assert.ok(centre(10.7) < 2.5 && centre(12.5) >= 2.5, "cutover sits near 12 mm, as the option label says");
+  const nested = buildFrame(M, {}, deco, { corner: "nested" }).part.volume();
+  const solid = buildFrame(M, {}, deco, { corner: "diamond" }).part.volume();
+  assert.ok(Math.abs(nested - solid) < 1e-6, "default border: nested and solid build the same part");
+});
+
 test("border below the minimum is raised, with a warning", () => {
   const v = validate({ BORDER: 5 }, deco, {}, M);
   assert.equal(v.g.SIDE, v.g.sideMin);

@@ -1,8 +1,8 @@
 {
-  "_source": "build123d model (3d-print repo, fridge-card-frame/build.py, 2026-11-22), the version printed and verified. Volumes in mm3, bbox in print frame (X depth, Y width, Z height).",
-  "card":    { "params": {}, "style": {}, "volume": 20380.874233939878, "bbox": [20.85, 73.0, 110.5] },
-  "coupon":  { "params": {}, "style": {}, "coupon": true, "volume": 3544.2300959318814, "bbox": [5.25, 73.0, 20.0] },
-  "strip":   { "params": {"CARD_W": 50.8, "CARD_H": 152.4, "CARD_T": 0.25, "MAG_N": 6, "FIN_D": 22}, "style": {}, "volume": 31734.71597847643, "bbox": [27.65, 72.8, 174.4] },
-  "mag10x3": { "params": {"MAG_DIA": 10.0, "MAG_T": 3.0}, "style": {"scale": 1}, "volume": 29317.059774592777, "bbox": [21.65, 77.0, 114.5] },
-  "odd":     { "params": {"CARD_W": 60.0, "CARD_H": 70.0, "CARD_T": 0.8, "OVERLAP": 3.0, "MAG_N": 2, "FIN": false}, "style": {}, "volume": 18347.82950798629, "bbox": [5.6, 82.0, 92.0] }
+  "_source": "build123d model (3d-print repo, fridge-card-frame/build.py, 2026-11-22), the version printed and verified. Volumes in mm3, bbox in print frame (X depth, Y width, Z height). Volumes re-baselined 2026-11-23 for the fitted corner diamond (no trim; nested turns solid below a ~12 mm border): a deliberate change from the build123d model, which has the bite.",
+  "card":    { "params": {}, "style": {}, "volume": 20336.064228298663, "bbox": [20.85, 73.0, 110.5] },
+  "coupon":  { "params": {}, "style": {}, "coupon": true, "volume": 3521.7224746698025, "bbox": [5.25, 73.0, 20.0] },
+  "strip":   { "params": {"CARD_W": 50.8, "CARD_H": 152.4, "CARD_T": 0.25, "MAG_N": 6, "FIN_D": 22}, "style": {}, "volume": 31689.90963628277, "bbox": [27.65, 72.8, 174.4] },
+  "mag10x3": { "params": {"MAG_DIA": 10.0, "MAG_T": 3.0}, "style": {"scale": 1}, "volume": 29266.657695898797, "bbox": [21.65, 77.0, 114.5] },
+  "odd":     { "params": {"CARD_W": 60.0, "CARD_H": 70.0, "CARD_T": 0.8, "OVERLAP": 3.0, "MAG_N": 2, "FIN": false}, "style": {}, "volume": 18333.27833239999, "bbox": [5.6, 82.0, 92.0] }
 }
