@@ -1,0 +1,28 @@
+# Runs the tests on every pull request and every push to main, and checks that docs/ (the published
+# site) was rebuilt from the current src/ and web/. A red check means: do not merge.
+name: test
+on:
+  pull_request:
+  push:
+    branches: [main]
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+      - run: npm ci
+      - run: npm test
+      - name: docs/ is up to date
+        run: |
+          npm run site
+          if [ -n "$(git status --porcelain -- docs/)" ]; then
+            git status --short -- docs/
+            echo "::error::docs/ does not match src/ and web/. Run 'npm run site' and commit docs/."
+            exit 1
+          fi
