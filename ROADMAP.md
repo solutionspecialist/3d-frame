@@ -26,4 +26,4 @@ slicer supports) and set proven limits.
 - A clearance test-piece generator for your printer.
 - Mounting for non-magnetic surfaces: keyhole hanger, adhesive, desk stand.
 
-Contributions welcome; new styles follow "Adding a style" in the [README](README.md).
+Work in progress is broken into tasks in [TASKS.md](TASKS.md). Contributions welcome; new styles follow "Adding a style" in the [README](README.md).

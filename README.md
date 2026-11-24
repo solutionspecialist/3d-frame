@@ -51,7 +51,7 @@ Geometry runs on [manifold-3d](https://github.com/elalish/manifold); the preview
 
 ```
 npm install
-npm test        # 18 tests: reference volumes/sizes, card fit, magnets, closed solid, style settings
+npm test        # 20 tests: reference volumes/sizes, card fit, magnets, closed solid, style settings
 npm run site    # rebuild docs/ after changing src/ or web/
 ```
 
